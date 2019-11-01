@@ -1,55 +1,39 @@
 package br.edu.utfpr.pb.dainf.correiosprecoprazows.service;
 
+import java.util.List;
+
+import br.edu.utfpr.pb.dainf.correiosprecoprazows.model.DataRequest;
 import br.edu.utfpr.pb.dainf.correiosprecoprazows.model.PrecoPrazo;
 import correios.wsdl.CResultado;
 import correios.wsdl.CServico;
 import correios.wsdl.CalcPrecoPrazo;
 import correios.wsdl.CalcPrecoPrazoResponse;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.oxm.jaxb.Jaxb2Marshaller;
+import org.springframework.stereotype.Service;
 import org.springframework.ws.client.core.support.WebServiceGatewaySupport;
 import org.springframework.ws.soap.client.core.SoapActionCallback;
 
-import java.math.BigDecimal;
-import java.util.List;
-
-
+@Service
 public class CalculadoraFreteService extends WebServiceGatewaySupport {
 
-    public PrecoPrazo getPrecoPrazo() {
-        PrecoPrazo p = new PrecoPrazo();
+    private static final Logger LOG = LoggerFactory.getLogger(CalculadoraFreteService.class);
+
+    @Value("${codigo.empresa}")
+    private String nCdEmpresa;
+
+    @Value("${senha.empresa}")
+    private String sDsSenha;
+
+    public PrecoPrazo getPrecoPrazo(final DataRequest dataRequest) {
+        final PrecoPrazo p = new PrecoPrazo();
+
         try {
-            String nCdEmpresa="09146920";
-            String sDsSenha="123456";
-            String nCdServico="40010";
-            String sCepOrigem="85501268";
-            String sCepDestino="79480000";
-            String nVlPeso="1";
-            int nCdFormato=1;
-            BigDecimal nVlComprimento=new BigDecimal(30);
-            BigDecimal nVlAltura=new BigDecimal(30);
-            BigDecimal nVlLargura= new BigDecimal(30);
-            BigDecimal nVlDiametro= new BigDecimal(0);
-            String sCdMaoPropria="n";
-            BigDecimal nVlValorDeclarado=new BigDecimal(30);
-            String sCdAvisoRecebimento="n";
+            final CalcPrecoPrazo calc = buildPrecoPrazo(dataRequest);
 
-            CalcPrecoPrazo calc = new CalcPrecoPrazo();
-            calc.setNCdEmpresa(nCdEmpresa);
-            calc.setNCdFormato(nCdFormato);
-            calc.setNCdServico(nCdServico);
-            calc.setSCepOrigem(sCepOrigem);
-            calc.setSCepDestino(sCepDestino);
-            calc.setSDsSenha(sDsSenha);
-            calc.setNVlPeso(nVlPeso);
-            calc.setNVlComprimento(nVlComprimento);
-            calc.setNVlAltura(nVlAltura);
-            calc.setNVlLargura(nVlLargura);
-            calc.setNVlDiametro(nVlDiametro);
-            calc.setSCdMaoPropria(sCdMaoPropria);
-            calc.setNVlValorDeclarado(nVlValorDeclarado);
-            calc.setSCdAvisoRecebimento(sCdAvisoRecebimento);
-
-            Jaxb2Marshaller marshaller = new Jaxb2Marshaller();
+            final Jaxb2Marshaller marshaller = new Jaxb2Marshaller();
 
             marshaller.setContextPath("correios.wsdl");
             marshaller.afterPropertiesSet();
@@ -64,14 +48,38 @@ public class CalculadoraFreteService extends WebServiceGatewaySupport {
                             new SoapActionCallback("http://tempuri.org/CalcPrecoPrazo"));
 
             CResultado result = response.getCalcPrecoPrazoResult();
-            List<CServico> s = result.getServicos().getCServico();
-            for (CServico cServico : s) {
+
+            List<CServico> cServicos = result.getServicos().getCServico();
+
+            cServicos.forEach(cServico -> {
                 p.setPrazo(Integer.valueOf(cServico.getPrazoEntrega()));
-                p.setPreco(Double.valueOf( cServico.getValor().replace(".","").replace(",",".") ));
-            }
-        }catch (Exception e) {
-            e.printStackTrace();
+                p.setPreco(Double.valueOf(cServico.getValor().replace(".","").replace(",",".") ));
+            });
+
+        } catch (final Exception e) {
+            LOG.error("Erro ao enviar request ao ws do correio", e);
         }
+
         return p;
+    }
+
+    private CalcPrecoPrazo buildPrecoPrazo (final DataRequest dataRequest) {
+        CalcPrecoPrazo calc = new CalcPrecoPrazo();
+        calc.setNCdEmpresa(nCdEmpresa);
+        calc.setSDsSenha(sDsSenha);
+
+        calc.setNCdFormato(dataRequest.getFormato());
+        calc.setNCdServico(dataRequest.getServico());
+        calc.setSCepOrigem(dataRequest.getCepOrigem());
+        calc.setSCepDestino(dataRequest.getCepDestino());
+        calc.setNVlPeso(dataRequest.getPeso());
+        calc.setNVlComprimento(dataRequest.getComprimento());
+        calc.setNVlAltura(dataRequest.getAltura());
+        calc.setNVlLargura(dataRequest.getLargura());
+        calc.setNVlDiametro(dataRequest.getDiametro());
+        calc.setSCdMaoPropria(dataRequest.getMp());
+        calc.setNVlValorDeclarado(dataRequest.getValorDeclarado());
+        calc.setSCdAvisoRecebimento(dataRequest.getAr());
+        return calc;
     }
 }
