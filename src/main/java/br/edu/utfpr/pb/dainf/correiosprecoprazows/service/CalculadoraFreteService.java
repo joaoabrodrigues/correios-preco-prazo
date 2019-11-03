@@ -3,7 +3,6 @@ package br.edu.utfpr.pb.dainf.correiosprecoprazows.service;
 import java.util.List;
 
 import br.edu.utfpr.pb.dainf.correiosprecoprazows.model.DataRequest;
-import br.edu.utfpr.pb.dainf.correiosprecoprazows.model.PrecoPrazo;
 import correios.wsdl.CResultado;
 import correios.wsdl.CServico;
 import correios.wsdl.CalcPrecoPrazo;
@@ -27,9 +26,7 @@ public class CalculadoraFreteService extends WebServiceGatewaySupport {
     @Value("${senha.empresa}")
     private String sDsSenha;
 
-    public PrecoPrazo getPrecoPrazo(final DataRequest dataRequest) {
-        final PrecoPrazo p = new PrecoPrazo();
-
+    public List<CServico> getPrecoPrazo(final DataRequest dataRequest) {
         try {
             final CalcPrecoPrazo calc = buildPrecoPrazo(dataRequest);
 
@@ -49,18 +46,12 @@ public class CalculadoraFreteService extends WebServiceGatewaySupport {
 
             CResultado result = response.getCalcPrecoPrazoResult();
 
-            List<CServico> cServicos = result.getServicos().getCServico();
-
-            cServicos.forEach(cServico -> {
-                p.setPrazo(Integer.valueOf(cServico.getPrazoEntrega()));
-                p.setPreco(Double.valueOf(cServico.getValor().replace(".","").replace(",",".") ));
-            });
+            return result.getServicos().getCServico();
 
         } catch (final Exception e) {
             LOG.error("Erro ao enviar request ao ws do correio", e);
         }
-
-        return p;
+        return null;
     }
 
     private CalcPrecoPrazo buildPrecoPrazo (final DataRequest dataRequest) {
