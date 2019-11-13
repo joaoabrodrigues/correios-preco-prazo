@@ -8,6 +8,7 @@ import br.edu.utfpr.pb.dainf.correiosprecoprazows.service.CalculadoraFreteServic
 import correios.wsdl.CServico;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
+import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -21,6 +22,7 @@ public class CalculadoraFreteController {
         this.calculadoraFreteService = calculadoraFreteService;
     }
 
+    @CrossOrigin
     @GetMapping(path = "preco", produces = MediaType.APPLICATION_JSON_UTF8_VALUE)
     public List<CServico> getPrecoPrazo(@RequestParam final String servico,
                                         @RequestParam final String cepOrigem,
