@@ -6,7 +6,6 @@ import java.util.List;
 import br.edu.utfpr.pb.dainf.correiosprecoprazows.model.DataRequest;
 import br.edu.utfpr.pb.dainf.correiosprecoprazows.service.CalculadoraFreteService;
 import correios.wsdl.CServico;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
